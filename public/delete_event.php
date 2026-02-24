@@ -1,4 +1,9 @@
 <?php
+/**
+ * TRAITEMENT DE LA SUPPRESSION D'UN ÉVÉNEMENT
+ * Ce script gère la suppression sécurisée d'un enregistrement et de son image associée.
+ */
+
 require_once('../config/database.php');
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && !empty($_POST['event_id'])) {

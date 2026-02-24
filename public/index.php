@@ -1,35 +1,38 @@
 <?php
+/**
+ * PAGE PRINCIPALE : CALENDRIER INTERACTIF
+ * Ce fichier gère l'affichage de la grille, la navigation entre les mois
+ * et l'injection des données d'événements.
+ */
+
 session_start();
 
-// Inclusion des fichiers de configuration et fonctions
+// --- CHARGEMENT DES DÉPENDANCES ---
 require_once('../config/database.php');
 require_once('../includes/functions.php');
 require_once('../includes/header.php');
 
-// Affichage des erreurs pour le développement
-ini_set('display_errors', 1);
-ini_set('display_startup_errors', 1);
-error_reporting(E_ALL);
-
+// --- GESTION DE LA NAVIGATION ---
+// Si l'utilisateur clique sur Précédent/Suivant, on met à jour la session
 if (isset($_GET['month']) && isset($_GET['year'])) {
     $_SESSION['current_month'] = $_GET['month'];
     $_SESSION['current_year'] = $_GET['year'];
 }
 
-// Récupération du mois et de l'année
+// Détermination du mois et de l'année à afficher (Priorité Session > Date actuelle)
 $month = $_SESSION['current_month'] ?? date('m');
 $year = $_SESSION['current_year'] ?? date('Y');
 
-// Données du calendrier
+// Récupération des données de structure (nom du mois, jours, décalage)
 $calendar = getCalendarDays($month, $year);
 
-// Navigation
+// Génération des variables pour les liens "Précédent" et "Suivant"
 $prevMonth = date('m', strtotime("$year-$month-01 -1 month"));
 $prevYear = date('Y', strtotime("$year-$month-01 -1 month"));
 $nextMonth = date('m', strtotime("$year-$month-01 +1 month"));
 $nextYear = date('Y', strtotime("$year-$month-01 +1 month"));
 
-// Récupération des événements depuis la base de données
+// Extraction des événements du mois depuis la base de données
 $allEvents = getEventsForMonth($db, $month, $year);
 ?>
 
@@ -106,6 +109,7 @@ $allEvents = getEventsForMonth($db, $month, $year);
                                 <?php
                                 $hasImage = !empty($e['image']);
 
+                                // Préparation des variables sécurisées pour l'appel JS
                                 $jsId = $e['id'];
                                 $jsTitle = htmlspecialchars(addslashes($e['title']), ENT_QUOTES);
                                 $jsImage = $hasImage ? htmlspecialchars(addslashes($e['image']), ENT_QUOTES) : '';
@@ -133,6 +137,7 @@ $allEvents = getEventsForMonth($db, $month, $year);
     </main>
 
     <script>
+        // Le token est passé au JS pour permettre la comparaison côté client
         const currentUserToken = "<?= $_COOKIE['user_token'] ?? '' ?>";
     </script>
     <script src="script.js"></script>

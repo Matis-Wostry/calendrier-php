@@ -1,4 +1,10 @@
 <?php
+/**
+ * TRAITEMENT DE LA CRÉATION D'UN ÉVÉNEMENT
+ * Ce script réceptionne les données du formulaire d'ajout, traite l'image 
+ * et enregistre le tout en base de données.
+ */
+
 session_start();
 require_once('../config/database.php');
 

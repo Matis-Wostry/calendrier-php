@@ -1,6 +1,10 @@
 <?php
 /**
- * Génère les données nécessaires pour afficher la grille du mois
+ * Génère toutes les données nécessaires pour construire la grille du calendrier.
+ * Calcule le nombre de jours, le décalage pour le premier jour du mois, et traduit le mois.
+ * @param int|string $month Le mois ciblé (1 à 12)
+ * @param int|string $year L'année ciblée (ex: 2026)
+ * @return array Un tableau associatif contenant les infos pour l'affichage HTML
  */
 function getCalendarDays($month, $year)
 {
@@ -27,7 +31,12 @@ function getCalendarDays($month, $year)
 }
 
 /**
- * Récupère tous les événements pour un mois et une année donnés
+ * Récupère tous les événements de la base de données pour un mois donné,
+ * et les trie par jour pour faciliter l'affichage dans la grille.
+ * @param PDO $db L'instance de connexion à la base de données
+ * @param int|string $month Le mois ciblé
+ * @param int|string $year L'année ciblée
+ * @return array Un tableau d'événements groupés par jour (ex: $events[15] pour le 15 du mois)
  */
 function getEventsForMonth($db, $month, $year)
 {

@@ -1,4 +1,9 @@
 <?php
+/**
+ * TRAITEMENT DE LA MISE À JOUR D'UN ÉVÉNEMENT
+ * Ce script permet de modifier les informations d'un événement existant 
+ * après avoir vérifié les droits de l'utilisateur.
+ */
 session_start();
 require_once('../config/database.php');
 
