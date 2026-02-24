@@ -60,6 +60,17 @@ $allEvents = getEventsForMonth($db, $month, $year);
             </div>
         </div>
 
+        <div class="grid grid-cols-7 gap-px mb-2">
+            <?php
+            $jours = ['Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi', 'Dimanche'];
+            foreach ($jours as $jour) {
+            ?>
+                <div class="text-center font-bold text-gray-500 uppercase text-xs tracking-wider py-2">
+                    <?= $jour ?>
+                </div>
+            <?php }; ?>
+        </div>
+
         <div class="grid grid-cols-7 gap-px bg-gray-200 border border-gray-200">
             <?php for ($i = 0; $i < $calendar['paddingBefore']; $i++) { ?>
                 <div class="bg-gray-50 h-32"></div>
@@ -92,9 +103,27 @@ $allEvents = getEventsForMonth($db, $month, $year);
                     <div class="mt-1 space-y-1 overflow-y-auto max-h-20">
                         <?php if (isset($allEvents[$day])) { ?>
                             <?php foreach ($allEvents[$day] as $e) { ?>
-                                <div class="text-[10px] p-1 bg-blue-500 text-white rounded truncate shadow-sm" title="<?= htmlspecialchars($e['title']) ?>">
-                                    <?= htmlspecialchars($e['title']) ?>
-                                </div>
+                                <?php
+                                $hasImage = !empty($e['image']);
+
+                                $jsId = $e['id'];
+                                $jsTitle = htmlspecialchars(addslashes($e['title']), ENT_QUOTES);
+                                $jsImage = $hasImage ? htmlspecialchars(addslashes($e['image']), ENT_QUOTES) : '';
+                                $jsUserId = htmlspecialchars(addslashes($e['user_id']), ENT_QUOTES);
+                                ?>
+
+                                <button type="button" onclick="openViewModal('<?= $jsId ?>', '<?= $jsTitle ?>', '<?= $jsImage ?>', '<?= $jsUserId ?>', '<?= $currentDateStr ?>')"
+                                    class="w-full text-left text-[10px] p-1 bg-blue-500 text-white rounded truncate shadow-sm hover:bg-blue-600 flex items-center gap-1 transition-colors"
+                                    title="<?= htmlspecialchars($e['title']) ?>">
+
+                                    <?php if ($hasImage) { ?>
+                                        <svg class="w-3 h-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                                        </svg>
+                                    <?php }; ?>
+
+                                    <span class="truncate"><?= htmlspecialchars($e['title']) ?></span>
+                                </button>
                             <?php }; ?>
                         <?php }; ?>
                     </div>
@@ -103,45 +132,11 @@ $allEvents = getEventsForMonth($db, $month, $year);
         </div>
     </main>
 
-    <div id="eventModal" class="fixed inset-0 bg-gray-900 bg-opacity-50 hidden items-center justify-center z-50 transition-opacity">
-        <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6 transform transition-all scale-95">
-            <div class="flex justify-between items-center mb-4">
-                <h3 class="text-xl font-bold text-gray-800">Nouvel événement</h3>
-                <button onclick="closeModal()" class="text-gray-400 hover:text-gray-600 text-2xl">&times;</button>
-            </div>
-
-            <form method="POST" action="event_handler.php" enctype="multipart/form-data" class="space-y-4">
-                <input type="hidden" name="event_date" id="modalDateInput">
-
-                <div>
-                    <label class="block text-sm font-semibold text-gray-700 mb-1">Que voulez-vous prévoir ?</label>
-                    <input type="text" name="title" required placeholder="Ex: Déjeuner Cartier"
-                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none">
-                </div>
-
-                <div>
-                    <label class="block text-sm font-semibold text-gray-700 mb-1">Image (Optionnel)</label>
-                    <input type="file" name="event_image" accept="image/jpeg, image/png, image/webp"
-                        class="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 transition-colors">
-                </div>
-
-                <div class="bg-blue-50 p-3 rounded-lg flex items-center text-blue-700 text-sm">
-                    <svg class="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
-                        <path d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z"></path>
-                    </svg>
-                    Date sélectionnée : <span id="displayDate" class="font-bold ml-1"></span>
-                </div>
-
-                <div class="flex space-x-3 pt-4">
-                    <button type="button" onclick="closeModal()" class="flex-1 px-4 py-2 bg-gray-100 text-gray-700 rounded-xl hover:bg-gray-200 transition">Annuler</button>
-                    <button type="submit" class="flex-1 px-4 py-2 bg-blue-600 text-white rounded-xl hover:bg-blue-700 shadow-lg transition">Enregistrer</button>
-                </div>
-            </form>
-        </div>
-    </div>
-
-    <script src="./script.js"></script>
-    <?php include('../includes/footer.php'); ?>
+    <script>
+        const currentUserToken = "<?= $_COOKIE['user_token'] ?? '' ?>";
+    </script>
+    <script src="script.js"></script>
+    <?php include('../includes/modals.php'); ?>
 </body>
 
 </html>
