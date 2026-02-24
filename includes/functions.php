@@ -18,3 +18,22 @@ function getCalendarDays($month, $year) {
         'year' => $year
     ];
 }
+
+/**
+ * Récupère tous les événements pour un mois et une année donnés
+ */
+function getEventsForMonth($db, $month, $year) {
+    $sql = "SELECT title, DAY(event_date) as day 
+            FROM events 
+            WHERE MONTH(event_date) = :month 
+            AND YEAR(event_date) = :year";
+            
+    $stmt = $db->prepare($sql);
+    $stmt->execute([':month' => $month, ':year' => $year]);
+    
+    $events = [];
+    foreach ($stmt->fetchAll(PDO::FETCH_ASSOC) as $row) {
+        $events[$row['day']][] = $row;
+    }
+    return $events;
+}
