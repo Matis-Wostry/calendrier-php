@@ -1,4 +1,6 @@
 <?php
+session_start();
+
 // Inclusion des fichiers de configuration et fonctions
 require_once('../config/database.php');
 require_once('../includes/functions.php');
@@ -9,9 +11,14 @@ ini_set('display_errors', 1);
 ini_set('display_startup_errors', 1);
 error_reporting(E_ALL);
 
+if (isset($_GET['month']) && isset($_GET['year'])) {
+    $_SESSION['current_month'] = $_GET['month'];
+    $_SESSION['current_year'] = $_GET['year'];
+}
+
 // Récupération du mois et de l'année
-$month = $_GET['month'] ?? date('m');
-$year = $_GET['year'] ?? date('Y');
+$month = $_SESSION['current_month'] ?? date('m');
+$year = $_SESSION['current_year'] ?? date('Y');
 
 // Données du calendrier
 $calendar = getCalendarDays($month, $year);
@@ -54,42 +61,45 @@ $allEvents = getEventsForMonth($db, $month, $year);
         </div>
 
         <div class="grid grid-cols-7 gap-px bg-gray-200 border border-gray-200">
-            <?php for ($i = 0; $i < $calendar['paddingBefore']; $i++): ?>
+            <?php for ($i = 0; $i < $calendar['paddingBefore']; $i++) { ?>
                 <div class="bg-gray-50 h-32"></div>
-            <?php endfor; ?>
+            <?php }; ?>
 
-            <?php for ($day = 1; $day <= $calendar['daysInMonth']; $day++): ?>
+            <?php for ($day = 1; $day <= $calendar['daysInMonth']; $day++) { ?>
                 <?php
-                    // Construction de la date pour ce jour précis
-                    $dayPad = str_pad($day, 2, "0", STR_PAD_LEFT);
-                    $currentDateStr = "$year-$month-$dayPad";
-                    $isToday = ($day == date('j') && $month == date('m') && $year == date('Y'));
+                $dayPad = str_pad($day, 2, "0", STR_PAD_LEFT);
+                $currentDateStr = "$year-$month-$dayPad";
+                $isToday = ($day == date('j') && $month == date('m') && $year == date('Y'));
+                $isSunday = (date('N', strtotime($currentDateStr)) == 7);
                 ?>
-                <div class="bg-white h-32 p-2 border-t hover:bg-blue-50 transition-colors group relative">
+                <div class="h-32 p-2 border-t relative <?= $isSunday ? 'bg-[repeating-linear-gradient(45deg,transparent,transparent_10px,#f3f4f6_10px,#f3f4f6_20px)] cursor-not-allowed' : 'bg-white hover:bg-blue-50 transition-colors group' ?>">
+
                     <div class="flex justify-between items-start">
-                        <p class="<?= $isToday ? 'bg-blue-600 text-white w-7 h-7 flex items-center justify-center rounded-full font-bold' : 'text-gray-700' ?>">
+                        <p class="<?= $isToday ? 'bg-blue-600 text-white w-7 h-7 flex items-center justify-center rounded-full font-bold' : ($isSunday ? 'text-gray-400' : 'text-gray-700') ?>">
                             <?= $day ?>
                         </p>
 
-                        <button onclick="openModal('<?= $currentDateStr ?>')"
-                            class="opacity-0 group-hover:opacity-100 bg-blue-100 text-blue-600 p-1 rounded-lg hover:bg-blue-600 hover:text-white transition-all">
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
-                            </svg>
-                        </button>
+                        <?php if (!$isSunday) { ?>
+                            <button onclick="openModal('<?= $currentDateStr ?>')"
+                                class="opacity-0 group-hover:opacity-100 bg-blue-100 text-blue-600 p-1 rounded-lg hover:bg-blue-600 hover:text-white transition-all">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+                                </svg>
+                            </button>
+                        <?php }; ?>
                     </div>
 
                     <div class="mt-1 space-y-1 overflow-y-auto max-h-20">
-                        <?php if (isset($allEvents[$day])): ?>
-                            <?php foreach ($allEvents[$day] as $e): ?>
+                        <?php if (isset($allEvents[$day])) { ?>
+                            <?php foreach ($allEvents[$day] as $e) { ?>
                                 <div class="text-[10px] p-1 bg-blue-500 text-white rounded truncate shadow-sm" title="<?= htmlspecialchars($e['title']) ?>">
                                     <?= htmlspecialchars($e['title']) ?>
                                 </div>
-                            <?php endforeach; ?>
-                        <?php endif; ?>
+                            <?php }; ?>
+                        <?php }; ?>
                     </div>
                 </div>
-            <?php endfor; ?>
+            <?php }; ?>
         </div>
     </main>
 
@@ -100,13 +110,19 @@ $allEvents = getEventsForMonth($db, $month, $year);
                 <button onclick="closeModal()" class="text-gray-400 hover:text-gray-600 text-2xl">&times;</button>
             </div>
 
-            <form method="POST" action="event_handler.php" class="space-y-4">
+            <form method="POST" action="event_handler.php" enctype="multipart/form-data" class="space-y-4">
                 <input type="hidden" name="event_date" id="modalDateInput">
 
                 <div>
                     <label class="block text-sm font-semibold text-gray-700 mb-1">Que voulez-vous prévoir ?</label>
                     <input type="text" name="title" required placeholder="Ex: Déjeuner Cartier"
                         class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none">
+                </div>
+
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-1">Image (Optionnel)</label>
+                    <input type="file" name="event_image" accept="image/jpeg, image/png, image/webp"
+                        class="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 transition-colors">
                 </div>
 
                 <div class="bg-blue-50 p-3 rounded-lg flex items-center text-blue-700 text-sm">

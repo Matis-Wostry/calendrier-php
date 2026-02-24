@@ -23,7 +23,7 @@ function getCalendarDays($month, $year) {
  * Récupère tous les événements pour un mois et une année donnés
  */
 function getEventsForMonth($db, $month, $year) {
-    $sql = "SELECT title, DAY(event_date) as day 
+    $sql = "SELECT id, title, event_date, DAY(event_date) as day, user_id, image 
             FROM events 
             WHERE MONTH(event_date) = :month 
             AND YEAR(event_date) = :year";
